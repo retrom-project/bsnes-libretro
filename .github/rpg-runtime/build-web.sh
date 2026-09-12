@@ -42,12 +42,12 @@ stage="$work/stage"
 mkdir -p "$stage"
 install -m 0644 "$work/raw/bsnes_libretro.js" "$stage/"
 install -m 0644 "$work/raw/bsnes_libretro.wasm" "$stage/"
-install -m 0644 "$root/LICENSE.txt" "$stage/license.txt"
+cat "$root/LICENSE.txt" "$root/libco/LICENSE" "$root/bsnes/gb/LICENSE" "$work/raw/retroarch-COPYING" > "$stage/license.txt"
 printf '%s\n' '{"minimumEJSVersion":"4.3.0","version":"2.0.3"}' > "$stage/build.json"
 printf '%s\n' '{"name":"bsnes","extensions":["sfc","smc","swc","fig"],"makeoptions":{"buildpath":"./","makescript":"Makefile","arguments":[]},"options":{},"save":"SRM","license":"LICENSE.txt","repo":"https://github.com/retrom-project/bsnes-libretro"}' > "$stage/core.json"
 
 (cd "$stage" && 7z a -mtm=off -mta=off -mtc=off -bd -bso0 -bsp0 -t7z "$output/bsnes-wasm.data" \
   bsnes_libretro.js bsnes_libretro.wasm build.json core.json license.txt)
-install -m 0644 "$root/LICENSE.txt" "$output/LICENSE.txt"
+install -m 0644 "$stage/license.txt" "$output/LICENSE.txt"
 
 gzip -n -c "$work/source.tar" > "$output/source.tar.gz"

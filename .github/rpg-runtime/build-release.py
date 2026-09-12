@@ -36,7 +36,10 @@ with tempfile.TemporaryDirectory() as temporary:
     if json.loads((extracted / "core.json").read_text())["name"] != core:
         raise SystemExit("RETROM_CORE_ARCHIVE_INVALID")
     notice = (args.output / license_name).read_bytes()
-    if (extracted / "license.txt").read_bytes() != notice or notice != (ROOT / license_name).read_bytes():
+    if (extracted / "license.txt").read_bytes() != notice or any(
+        (ROOT / path).read_bytes() not in notice
+        for path in ("LICENSE.txt", "libco/LICENSE", "bsnes/gb/LICENSE")
+    ) or b"GNU GENERAL PUBLIC LICENSE" not in notice:
         raise SystemExit("RETROM_CORE_LICENSE_INVALID")
 assets = [{"filename": name, "sizeBytes": (args.output / name).stat().st_size,
            "observedSha256": hashlib.sha256((args.output / name).read_bytes()).hexdigest()} for name in sorted(expected)]

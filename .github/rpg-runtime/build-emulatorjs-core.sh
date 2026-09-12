@@ -41,3 +41,5 @@ grep -q "Asyncify" "/work/retroarch/${core_name}_libretro.js"
 
 install -m 0644 "/work/retroarch/${core_name}_libretro.js" /output/
 install -m 0644 "/work/retroarch/${core_name}_libretro.wasm" /output/
+
+install -m 0644 /work/retroarch/COPYING /output/retroarch-COPYING
