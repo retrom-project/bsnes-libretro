@@ -76,6 +76,11 @@ namespace SuperFamicom {
     enum : uint { Size = 4_KiB * sizeof(void*) };
 
     auto create(auto (*entrypoint)() -> void, uint frequency_) -> void {
+      #if defined(__EMSCRIPTEN__)
+      // Asyncify contexts cannot be derived from a serialized native stack.
+      // A synchronized restore powers the system and needs fresh contexts.
+      if(thread) { co_delete(thread); thread = nullptr; }
+      #endif
       if(!thread) {
         thread = co_create(Thread::Size, entrypoint);
       } else {

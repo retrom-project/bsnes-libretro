@@ -5,3 +5,8 @@ hiro/qt/qt.moc
 *.so
 *.o
 *.dylib
+
+/build/
+/.cache/
+
+__pycache__/
