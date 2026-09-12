@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "forkRepository": "https://github.com/retrom-project/bsnes-libretro",
+  "defaultBranch": "retrom/g4b344745e387",
+  "upstreamMirrorBranch": "master",
+  "upstreams": [
+    {
+      "role": "emulatorjs-core",
+      "repository": "https://github.com/EmulatorJS/bsnes-libretro",
+      "refType": "COMMIT",
+      "ref": "4b344745e3878e7c0675a60c624582935524b8f7",
+      "commit": "4b344745e3878e7c0675a60c624582935524b8f7"
+    },
+    {
+      "role": "emulatorjs-retroarch-linker",
+      "repository": "https://github.com/EmulatorJS/RetroArch",
+      "refType": "COMMIT",
+      "ref": "5a21e08a5de7649cfa6416d6843c0c40de27714e",
+      "commit": "5a21e08a5de7649cfa6416d6843c0c40de27714e"
+    }
+  ],
+  "adapterAbi": "emulatorjs-state-v1",
+  "releaseAssets": [
+    "bsnes-wasm.data",
+    "LICENSE.txt",
+    "source.tar.gz",
+    "rpg-runtime-release.json"
+  ]
+}

@@ -1,0 +1,100 @@
+--- a/tasks/task_save.c
++++ b/tasks/task_save.c
+@@ -1833,31 +1833,40 @@
+ 
+ #ifdef EMULATORJS
+ 
++extern void retrom_save_state_complete(char *result);
++
+ char* save_state_info(void)
+ {
+    void* save_data = NULL;
+-   char state_data[300]; // This should NEVER overflow. If it does we are doing something very wrong.
+-   memset(state_data, '\0', sizeof(state_data));
++   char *state_data = (char*)calloc(300, 1);
++   if (!state_data) {
++      retrom_save_state_complete(NULL);
++      return NULL;
++   }
+ 
+    size_t serial_size;
+ 
+    if (!core_info_current_supports_savestate()) {
+       strcpy(state_data, "Not supported||0");
++      retrom_save_state_complete(state_data);
+       return state_data;
+    }
+ 
+    serial_size = core_serialize_size();
+    if (serial_size == 0) {
+       strcpy(state_data, "Size is zero||0");
++      retrom_save_state_complete(state_data);
+       return state_data;
+    }
+ 
+    save_data = content_get_serialized_data(&serial_size);
+    if (!save_data) {
+       strcpy(state_data, "Error writing data||0");
++      retrom_save_state_complete(state_data);
+       return state_data;
+    }
+    sprintf(state_data, "%zu|%zu|1", serial_size, (unsigned long)save_data);
++   retrom_save_state_complete(state_data);
+    return state_data; // This must be freed by the JavaScript side!
+ }
+ 
+--- a/emscripten/emulatorjs.js
++++ b/emscripten/emulatorjs.js
+@@ -1,18 +1,40 @@
+ 
+ var LibraryEmulatorJS = {
+-    $EmulatorJSGetState: function() {
+-        let info = _save_state_info();
+-        let state = UTF8ToString(info).split("|");
+-        if (state[2] !== "1") {
+-            console.error("Failed to save state!", state[0]);
+-            throw new Error(state[0]);
++    $retromPendingState: null,
++    retrom_save_state_complete__deps: ['$retromPendingState'],
++    retrom_save_state_complete__sig: 'vi',
++    retrom_save_state_complete: function(info) {
++        const complete = retromPendingState;
++        retromPendingState = null;
++        if (complete) complete(info);
++    },
++    $EmulatorJSGetState__deps: ['$retromPendingState', '$UTF8ToString'],
++    $EmulatorJSGetState: async function() {
++        // Fiber trampolines do not preserve the outer export's return value.
++        const info = await new Promise((resolve, reject) => {
++            if (retromPendingState) return reject(new Error('Save state already pending'));
++            retromPendingState = resolve;
++            try {
++                _save_state_info();
++            } catch (error) {
++                retromPendingState = null;
++                reject(error);
++            }
++        });
++        if (!info) throw new Error('Save state allocation failed');
++        try {
++            const state = UTF8ToString(info).split('|');
++            if (state[2] !== '1') throw new Error(state[0]);
++            const size = parseInt(state[0]);
++            const dataStart = parseInt(state[1]);
++            try {
++                return new Uint8Array(HEAPU8.subarray(dataStart, dataStart + size));
++            } finally {
++                _free(dataStart);
++            }
++        } finally {
++            _free(info);
+         }
+-        const size = parseInt(state[0]);
+-        const dataStart = parseInt(state[1]);
+-        const data = HEAPU8.subarray(dataStart, dataStart + size);
+-        _free(info);
+-        _free(data);
+-        return new Uint8Array(data);
+     },
+     $EmulatorJSGetMemoryData: function(key) {
+         let keyPtr = stringToNewUTF8(key);
